@@ -27,7 +27,7 @@ fn main() -> Result<(), MainError> {
             println!(
                 "Session ended ({:02}h{:02}m)",
                 duration.num_hours(),
-                duration.num_minutes()
+                duration.num_minutes() % 60,
             );
         }
         Command::Log => {
@@ -44,7 +44,7 @@ fn main() -> Result<(), MainError> {
                     "Session running since {} ({:02}h{:02}m)",
                     start.format(TIME_FMT),
                     duration.num_hours(),
-                    duration.num_minutes()
+                    duration.num_minutes() % 60
                 );
             }
             None => println!("No session running"),
