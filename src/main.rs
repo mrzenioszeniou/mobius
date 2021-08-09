@@ -4,11 +4,12 @@ mod error;
 mod ledger;
 mod session;
 
-use crate::session::{DATETIME_FMT, TIME_FMT};
-use chrono::{Duration, Local};
-use ledger::Ledger;
+use crate::error::Error;
+use crate::ledger::Ledger;
+use crate::session::{DATETIME_FMT, DATE_FMT, TIME_FMT};
+use chrono::{Duration, Local, NaiveDate};
 use main_error::MainError;
-use std::str::FromStr;
+use std::cmp::Ordering;
 use structopt::StructOpt;
 
 fn main() -> Result<(), MainError> {
@@ -46,15 +47,17 @@ fn main() -> Result<(), MainError> {
                 println!("{}", curr.format(DATETIME_FMT))
             }
         }
-        Command::Day => {
-            let date = Local::now().naive_local().date();
+        Command::Day { day } => {
+            let date = day.unwrap_or_else(|| Local::now().naive_local().date());
 
             let mut total_duration = Duration::seconds(0);
             let mut overall_session = None;
 
             for session in ledger.history.iter().rev() {
-                if session.start().date() != date {
-                    break;
+                match session.start().date().cmp(&date) {
+                    Ordering::Less => continue,
+                    Ordering::Greater => break,
+                    _ => {}
                 }
 
                 overall_session = Some(match overall_session {
@@ -73,7 +76,7 @@ fn main() -> Result<(), MainError> {
                     start,
                     end
                 ),
-                None => println!("No sessions were logged today"),
+                None => println!("No sessions were logged on {}", date.format(DATE_FMT)),
             }
         }
     }
@@ -99,21 +102,14 @@ pub enum Command {
     Show,
     /// Show historical log
     Log,
-    /// Show today's summary
-    Day,
+    /// Show a day's summary
+    Day {
+        /// The day in the following format: 30-Aug-1991
+        #[structopt(short = "d", long = "day", parse(try_from_str = parse_date))]
+        day: Option<NaiveDate>,
+    },
 }
 
-impl FromStr for Command {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.trim().to_ascii_lowercase().as_str() {
-            "start" => Ok(Self::Start),
-            "stop" => Ok(Self::Stop),
-            "log" => Ok(Self::Log),
-            "show" => Ok(Self::Show),
-            "day" => Ok(Self::Day),
-            _ => Err(format!("{} is not a valid command", s)),
-        }
-    }
+fn parse_date(from: &str) -> Result<NaiveDate, Error> {
+    NaiveDate::parse_from_str(from, DATE_FMT).map_err(Error::from)
 }

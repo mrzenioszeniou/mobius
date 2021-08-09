@@ -8,7 +8,7 @@ pub enum Error {
     #[error("A session is already running since {0}")]
     SessionRunning(NaiveDateTime),
     #[error("{0}")]
-    Parse(#[from] chrono::format::ParseError),
+    Parse(#[from] chrono::ParseError),
     #[error("Could not find home directory")]
     HomeDirectoryNotFound,
     #[error("IO error:{0}")]

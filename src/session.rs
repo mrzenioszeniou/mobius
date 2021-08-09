@@ -3,6 +3,7 @@ use std::str::FromStr;
 
 pub const DATETIME_FMT: &str = "%Y/%m/%d %T";
 pub const TIME_FMT: &str = "%T";
+pub const DATE_FMT: &str = "%e-%b-%Y";
 
 #[derive(Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct Session {
