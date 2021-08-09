@@ -4,17 +4,17 @@ mobius is a simple command line tool that helps you log the time of your working
 
 Start a new session:
 ```
-mobius in
+mobius start
 ```
 
 Check if a session is already running:
 ```
-mobius status
+mobius show
 ```
 
 To end the current session
 ```
-mobius out
+mobius stop
 ```
 
 See history:

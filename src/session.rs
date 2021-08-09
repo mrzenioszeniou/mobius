@@ -66,3 +66,36 @@ impl FromStr for Session {
         Ok(Self { start, end })
     }
 }
+
+#[cfg(test)]
+mod test {
+    use std::collections::BTreeSet;
+
+    use super::*;
+
+    #[test]
+    fn ord() {
+        let stamps = vec![
+            Session {
+                start: NaiveDateTime::parse_from_str("1991/08/30 01:43:12", DATETIME_FMT).unwrap(),
+                end: NaiveDateTime::parse_from_str("1991/08/30 02:43:12", DATETIME_FMT).unwrap(),
+            },
+            Session {
+                start: NaiveDateTime::parse_from_str("1991/08/30 13:43:12", DATETIME_FMT).unwrap(),
+                end: NaiveDateTime::parse_from_str("1991/08/30 13:57:12", DATETIME_FMT).unwrap(),
+            },
+            Session {
+                start: NaiveDateTime::parse_from_str("1991/08/29 13:43:13", DATETIME_FMT).unwrap(),
+                end: NaiveDateTime::parse_from_str("1991/08/29 13:43:11", DATETIME_FMT).unwrap(),
+            },
+        ];
+
+        let ordered: BTreeSet<&Session> = stamps.iter().collect();
+
+        let mut iterator = ordered.into_iter();
+
+        assert_eq!(iterator.next(), Some(&stamps[2]));
+        assert_eq!(iterator.next(), Some(&stamps[0]));
+        assert_eq!(iterator.next(), Some(&stamps[1]));
+    }
+}

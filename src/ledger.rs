@@ -4,7 +4,7 @@ use crate::session::DATETIME_FMT;
 use chrono::Duration;
 use chrono::Local;
 use chrono::NaiveDateTime;
-use std::collections::BinaryHeap;
+use std::collections::BTreeSet;
 use std::fmt::Debug;
 use std::fs::OpenOptions;
 use std::io::Read;
@@ -14,7 +14,7 @@ use std::str::FromStr;
 
 #[derive(Debug)]
 pub struct Ledger {
-    pub history: BinaryHeap<Session>,
+    pub history: BTreeSet<Session>,
     pub current: Option<NaiveDateTime>,
     path: PathBuf,
 }
@@ -30,7 +30,7 @@ impl Ledger {
         path.push("ledger");
 
         let mut current = None;
-        let mut history = BinaryHeap::new();
+        let mut history = BTreeSet::new();
 
         if path.as_path().is_file() {
             let mut file = OpenOptions::new().read(true).open(&path)?;
@@ -48,7 +48,7 @@ impl Ledger {
                     }
                 };
 
-                history.push(session);
+                history.insert(session);
             }
         }
 
@@ -72,7 +72,7 @@ impl Ledger {
         match self.current.take() {
             None => Err(Error::NoSessionRunning),
             Some(start) => {
-                self.history.push(Session::with_start(start));
+                self.history.insert(Session::with_start(start));
                 Ok(Local::now().naive_local() - start)
             }
         }
@@ -86,6 +86,8 @@ impl Ledger {
             .open(&self.path)?;
 
         for session in self.history.iter() {
+            // println!("{}", session);
+
             let line = format!(
                 "{}-{}\n",
                 session.start().format(DATETIME_FMT),
