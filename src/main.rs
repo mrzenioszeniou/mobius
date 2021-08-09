@@ -85,17 +85,17 @@ fn main() -> Result<(), MainError> {
 
 #[derive(Debug, StructOpt)]
 pub struct Args {
-    /// start | stop | show | day| log
+    #[structopt(subcommand)]
     pub command: Command,
 }
 
 #[derive(Debug, StructOpt)]
 pub enum Command {
-    /// Starts a new session
+    /// Start a new session
     Start,
     /// Ends the current session
     Stop,
-    /// Status of current session
+    /// Show status of current session
     Show,
     /// Show historical log
     Log,

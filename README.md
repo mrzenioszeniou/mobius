@@ -17,7 +17,7 @@ To end the current session
 mobius stop
 ```
 
-See history:
+For more commands try
 ```
-mobius log
+mobius -h
 ```
