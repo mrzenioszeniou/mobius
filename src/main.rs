@@ -9,7 +9,6 @@ use crate::ledger::Ledger;
 use crate::session::{DATETIME_FMT, DATE_FMT, TIME_FMT};
 use chrono::{Duration, Local, NaiveDate};
 use main_error::MainError;
-use std::cmp::Ordering;
 use structopt::StructOpt;
 
 fn main() -> Result<(), MainError> {
@@ -18,7 +17,10 @@ fn main() -> Result<(), MainError> {
     let mut ledger = Ledger::load()?;
 
     match args.command {
-        Command::Start => ledger.start()?,
+        Command::Start => {
+            ledger.start()?;
+            ledger.persist()?;
+        }
         Command::Stop => {
             let duration = ledger.stop()?;
             ledger.persist()?;
@@ -48,40 +50,64 @@ fn main() -> Result<(), MainError> {
             }
         }
         Command::Day { day } => {
-            let date = day.unwrap_or_else(|| Local::now().naive_local().date());
+            let now = Local::now().naive_local();
 
-            let mut total_duration = Duration::seconds(0);
-            let mut overall_session = None;
+            let date = day.unwrap_or_else(|| now.date());
 
-            for session in ledger.history.iter().rev() {
-                match session.start().date().cmp(&date) {
-                    Ordering::Less => continue,
-                    Ordering::Greater => break,
-                    _ => {}
-                }
+            let mut sessions_logs = vec![];
+            let mut duration = Duration::seconds(0);
 
-                overall_session = Some(match overall_session {
-                    None => (session.start().time(), session.end().time()),
-                    Some((_, end)) => (session.start().time(), end),
-                });
+            let sessions = ledger
+                .history
+                .iter()
+                .filter(|s| s.start().date() == date || s.end().date() == date)
+                .collect::<Vec<_>>();
 
-                total_duration = total_duration + session.duration();
+            for (i, session) in sessions.iter().enumerate() {
+                let session_duration = session.duration();
+
+                sessions_logs.push(format!(
+                    "{} {} -- {:02}h{:02}m --> {}",
+                    if i == sessions.len() - 1 && (date != now.date() || ledger.current.is_none()) {
+                        "└"
+                    } else {
+                        "├"
+                    },
+                    session.start().format(TIME_FMT),
+                    session_duration.num_hours(),
+                    session_duration.num_minutes() % 60,
+                    session.end().format(TIME_FMT)
+                ));
+
+                duration = duration + session.duration();
             }
 
-            match overall_session {
-                Some((start, end)) => println!(
-                    "Logged {:02}h{:02}m from {} to {}",
-                    total_duration.num_hours(),
-                    total_duration.num_minutes() % 60,
-                    start,
-                    end
-                ),
-                None => println!("No sessions were logged on {}", date.format(DATE_FMT)),
+            if date == now.date() {
+                if let Some(current) = ledger.current {
+                    let current_duration = now.signed_duration_since(current);
+                    duration = duration + current_duration;
+                    sessions_logs.push(format!(
+                        "└ {} -- {:02}h{:02}m --> STILL RUNNING",
+                        current.format(TIME_FMT),
+                        current_duration.num_hours(),
+                        current_duration.num_minutes() % 60,
+                    ))
+                }
+            }
+
+            if duration.is_zero() {
+                println!("No sessions were logged on {}", date.format(DATE_FMT));
+            } else {
+                println!(
+                    "Logged {:02}h{:02}m on {}",
+                    duration.num_hours(),
+                    duration.num_minutes() % 60,
+                    date.format(DATE_FMT)
+                );
+                sessions_logs.iter().for_each(|l| println!("{}", l));
             }
         }
     }
-
-    ledger.persist()?;
 
     Ok(())
 }
