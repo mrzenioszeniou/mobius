@@ -1,6 +1,6 @@
 use crate::error::Error;
+use crate::format::DATETIME_FMT;
 use crate::session::Session;
-use crate::session::DATETIME_FMT;
 use chrono::Duration;
 use chrono::Local;
 use chrono::NaiveDateTime;
