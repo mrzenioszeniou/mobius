@@ -104,7 +104,7 @@ fn main() -> Result<(), MainError> {
             }
         }
         Command::Week { week } => {
-            let now = Local::now();
+            let now = Local::now().naive_local();
 
             let week = week.unwrap_or_else(|| now.iso_week());
 
@@ -157,6 +157,19 @@ fn main() -> Result<(), MainError> {
                 }
 
                 duration = duration + session_duration;
+            }
+
+            if week == now.iso_week() {
+                if let Some(current) = ledger.current {
+                    match days.get_mut(&now.date()) {
+                        Some(d) => {
+                            let current_duration = now.signed_duration_since(current);
+                            duration = duration + current_duration;
+                            *d = *d + current_duration;
+                        }
+                        None => return Err(Error::from("INTERNAL ERROR: Day not found").into()),
+                    }
+                }
             }
 
             if duration.is_zero() {
