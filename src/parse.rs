@@ -7,11 +7,11 @@ pub fn parse_date(from: &str) -> Result<NaiveDate, Error> {
 }
 
 pub fn parse_week(from: &str) -> Result<IsoWeek, Error> {
-    let mut split = from.trim().split("-");
+    let mut split = from.trim().split('-');
 
     let week = split
         .next()
-        .ok_or(Error::from(format!("Could not parse '{}' as a week", from)))?
+        .ok_or_else(|| Error::from(format!("Could not parse '{}' as a week", from)))?
         .parse()?;
 
     if week == 0 || week > 52 {
@@ -20,7 +20,7 @@ pub fn parse_week(from: &str) -> Result<IsoWeek, Error> {
 
     let year = split
         .next()
-        .ok_or(Error::from(format!("Could not parse '{}' as a week", from)))?
+        .ok_or_else(|| Error::from(format!("Could not parse '{}' as a week", from)))?
         .parse()?;
 
     Ok(NaiveDate::from_isoywd(year, week, chrono::Weekday::Mon).iso_week())

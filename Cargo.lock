@@ -109,7 +109,7 @@ checksum = "bb63bb1e282e0b6aba0addb1f0e87cb5181ea68142b2dfd21ba108f8e8088a64"
 
 [[package]]
 name = "mobius"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "chrono",
  "home",
