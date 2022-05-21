@@ -230,7 +230,7 @@ pub enum Command {
     /// Show a week's summary
     Week {
         /// The week and year in the following format: 35-2021
-        #[structopt(short = "w", long = "week", parse(try_from_str = parse_week))]
+        #[structopt(parse(try_from_str = parse_week))]
         week: Option<IsoWeek>,
     },
 }
